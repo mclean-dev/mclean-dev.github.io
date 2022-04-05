@@ -56,6 +56,7 @@
         <canvas id="myCanvas" width="510" height="380">Your browser does not support canvas element.</canvas>
 
         <script>
+            // initialize the canvas element
             const canvas = document.getElementById("myCanvas");
             const ctx = canvas.getContext("2d");
             // const el = document.getElementById('canvas');
@@ -65,9 +66,13 @@
             // el.addEventListener('touchmove', handleMove);
             document.addEventListener('keyup', keyUpHandler);
             document.addEventListener('keydown', keyDownHandler);
+            
+            // let's declare some variables
             let raf;
             let score = 0;
             let gameStart = false;
+            
+            //paddle object
             let paddle = {
                 width: 100,
                 height: 10,
@@ -84,7 +89,7 @@
                 }
             }
 
-
+            // ball object
             let ball = {
                 radius: 6,
                 color: '#0095DD',
@@ -104,7 +109,8 @@
                     ctx.closePath();
                 }
             }
-
+            
+            // object containing the field of bricks
             let brickField = {
                 bricks: [],
                 RowCount: 5,
@@ -115,12 +121,15 @@
                     for (let c = 0; c < this.ColumnCount; c++) {
                         this.bricks[c] = [];
                         for (let r = 0; r < this.RowCount; r++) {
+                            //give each brick a position in the field
+                            // state tells the game whether a brick should be displayed/hasn't yet been hit 
                             this.bricks[c][r] = { x: 0, y: 0, state: 0, height: 24, width: 44 };
                         }
                     }
                 }
             }
 
+            // input handlers
             function keyDownHandler(e) {
                 if (e.keyCode == 37) {
                     paddle.movement.left = 1;
@@ -141,12 +150,15 @@
                     paddle.movement.right = 0;
                 }
             }
+            
+            // render the score to the canvas
             function drawScore() {
                 ctx.font = "16px Verdana";
                 ctx.fillStyle = "#0095DD";
                 ctx.fillText("Score: " + score, 8, 20);
             }
-
+            
+            // render the brickfield to the canvas
             function drawBricks() {
                 for (var c = 0; c < brickField.ColumnCount; c++) {
                     for (var r = 0; r < brickField.RowCount; r++) {
@@ -162,11 +174,13 @@
                 }
             }
 
+            // check for collision between the ball and each brick
             function collide(brick) {
 
                 let distX;
                 let distY;
                 let bounce = { x: 0, y: 0 };
+                // find the closest horizontal point on the brick between the ball and brick
                 if (ball.x < brick.x) {
                     distX = brick.x;
                 } else if (ball.x > brick.x + brick.width) {
@@ -174,7 +188,8 @@
                 } else {
                     distX = ball.x;
                 }
-
+                
+                // find the closest vertical point on the brick between the ball and brick
                 if (ball.y < brick.y) {
                     distY = brick.y;
                 } else if (ball.y > brick.y + brick.height) {
@@ -182,8 +197,11 @@
                 } else {
                     distY = ball.y;
                 }
+                
+                // calculate the distance between the ball and brick -- if it is less than the radius of the ball, a collision has occured 
                 let distance = Math.sqrt(Math.pow(distX - ball.x, 2) + Math.pow(distY - ball.y, 2))
                 if (distance <= ball.radius) {
+                    // lets us know which direction the ball should bounce based on where it hit on the brick
                     if (ball.x < brick.x || ball.x > brick.x + brick.width) {
                         bounce.x = 1;
                     }
@@ -191,9 +209,11 @@
                         bounce.y = 1;
                     }
                 }
+                
                 return bounce;
             }
 
+            // loops through the brickfield, runs collision detection on each brick, changes the ball direction accordingly, and updates the score
             function brickCollisionDetection() {
                 for (n = 0; n < brickField.bricks.length; n++) {
                     for (m = 0; m < brickField.bricks[n].length; m++) {
@@ -215,6 +235,7 @@
                 }
             }
 
+            // after a loss/win, gets called to re-initialize the game state should the player wish to play again
             function refresh(message) {
                 let keepPlaying = confirm(message);
                 gameStart = false;
@@ -228,6 +249,7 @@
                 return;
             }
 
+            // main drawing function. renders the paddle, ball, score, bricks
             function draw() {
                 // drawing code
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -246,12 +268,15 @@
                     refresh('Game over. Play again?');
                 }
                 if (gameStart) {
+                    // if the ball and paddle collide, determine the angle of the ball's rebound
                     if (ball.y == paddle.y - ball.radius && (ball.x >= paddle.x && ball.x <= paddle.x + paddle.width)) {
                         let angle = Math.atan2(canvas.height - ball.y, ball.x - (paddle.x + paddle.width / 2));
                         ball.dy = -(Math.sin(angle) * ball.speed);
                         ball.dx = Math.cos(angle) * ball.speed;
                     }
                 }
+                
+                // move the paddle according to the keyboard input
                 if ((paddle.movement.left === 0 && paddle.movement.right === 1) && paddle.x <= canvas.width - paddle.width) {
                     paddle.x += 5;
                     if (!gameStart) {
@@ -271,6 +296,8 @@
                 console.log(ball.speed);
                 ball.x += ball.dx;
                 ball.y += ball.dy;
+                
+                // recursively call itself to update the canvas each frame
                 raf = window.requestAnimationFrame(draw);
 
             }
@@ -278,6 +305,8 @@
             brickField.initialize();
             paddle.initialize();
             ball.initialize();
+            
+            // call draw for the first time
             window.requestAnimationFrame(draw);
 
 
@@ -285,6 +314,9 @@
         <div id='notes'>
             <p><em>Notes:</em></p>
             <ul>
+                <li>
+                    <p>Arrow keys to move the paddle side to side and spacebar to start the game.</p>
+                </li>
                 <li>
                     <p>Does not yet work on mobile (not touch enabled).</p>
                 </li>
